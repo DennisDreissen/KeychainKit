@@ -11,8 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test-ios:
-    name: iOS Tests
+  unit-tests:
+    name: Unit Tests
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v6
