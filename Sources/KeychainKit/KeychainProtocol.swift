@@ -1,6 +1,14 @@
+//
+//  KeychainProtocol.swift
+//  KeychainKit
+//
+//  Created by Dennis Dreissen on 15/05/2026.
+//  Copyright © 2026 Dennis Dreissen
+//
+
 import Foundation
 
-public protocol KeychainProtocol {
+public protocol KeychainProtocol: Sendable {
 
     /// Service associated with this keychain to scope items.
     var service: String? { get }
@@ -12,16 +20,13 @@ public protocol KeychainProtocol {
     var synchronizable: Bool { get }
 
     /// Get all keys from the keychain with this instance's service, access group and synchronizable setting.
-    func keys() -> [String]
+    func keys() throws -> [String]
 
     /// Retrieves a string value from the keychain for the given key.
     ///
     /// - Parameters:
     ///   - key: The key used to store the string.
     /// - Returns: The stored string.
-    /// - Throws: `KeychainError.itemNotFound` if no item exists for the given key.
-    /// - Throws: `KeychainError.stringConversionFailed` if the data cannot be decoded as UTF-8.
-    /// - Throws: `KeychainError.unexpectedStatus` if the keychain query fails.
     func string(forKey key: String) throws -> String
 
     /// Retrieves a data value from the keychain for the given key.
@@ -29,8 +34,6 @@ public protocol KeychainProtocol {
     /// - Parameters:
     ///   - key: The key used to store the data.
     /// - Returns: The stored data.
-    /// - Throws: `KeychainError.itemNotFound` if no item exists for the given key.
-    /// - Throws: `KeychainError.unexpectedStatus` if the keychain query fails.
     func data(forKey key: String) throws -> Data
 
     /// Stores a string value in the keychain for the given key.
@@ -39,8 +42,6 @@ public protocol KeychainProtocol {
     ///   - value: The string to store in the keychain.
     ///   - key: The key to associate with the stored value.
     ///   - accessOption: Controls when the item can be accessed. Defaults to `.accessibleWhenUnlocked`.
-    /// - Throws: `KeychainError.stringConversionFailed` if the string cannot be encoded as UTF-8.
-    /// - Throws: `KeychainError.unexpectedStatus` if the keychain query fails.
     func set(_ value: String, forKey key: String, withAccessOption accessOption: KeychainAccessOption) throws
 
     /// Stores a data value in the keychain for the given key.
@@ -49,19 +50,15 @@ public protocol KeychainProtocol {
     ///   - value: The data to store in the keychain.
     ///   - key: The key to associate with the stored value.
     ///   - accessOption: Controls when the item can be accessed. Defaults to `.accessibleWhenUnlocked`.
-    /// - Throws: `KeychainError.unexpectedStatus` if the keychain query fails.
     func set(_ value: Data, forKey key: String, withAccessOption accessOption: KeychainAccessOption) throws
 
     /// Removes an item in the keychain for the given key.
     ///
     /// - Parameters:
     ///   - key: The key of the item to remove.
-    /// - Throws: `KeychainError.unexpectedStatus` if the keychain query fails.
     func remove(forKey key: String) throws
 
-    /// Removes all  items in the keychain with this instance's service, access group and synchronizable setting.
-    ///
-    /// - Throws: `KeychainError.unexpectedStatus` if the keychain query fails.
+    /// Removes all items in the keychain with this instance's service, access group and synchronizable setting.
     func clear() throws
 }
 

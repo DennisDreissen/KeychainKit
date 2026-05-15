@@ -1,3 +1,11 @@
+//
+//  Keychain.swift
+//  KeychainKit
+//
+//  Created by Dennis Dreissen on 15/05/2026.
+//  Copyright © 2026 Dennis Dreissen
+//
+
 import Foundation
 import Security
 
@@ -29,17 +37,24 @@ public struct Keychain: Sendable, KeychainProtocol {
     }
 
     /// Get all keys from the keychain with this instance's service, access group and synchronizable setting.
-    public func keys() -> [String] {
+    public func keys() throws -> [String] {
         var query = getBaseQuery()
         query[kSecReturnAttributes] = true
         query[kSecMatchLimit] = kSecMatchLimitAll
 
         var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
 
-        guard SecItemCopyMatching(query as CFDictionary, &result) == noErr,
-              let items = result as? [[CFString: Any]]
-        else {
+        guard status != errSecItemNotFound else {
             return []
+        }
+
+        guard status == noErr else {
+            throw KeychainError.unexpectedStatus(status)
+        }
+
+        guard let items = result as? [[CFString: Any]] else {
+            throw KeychainError.unexpectedResultType
         }
 
         return items.compactMap {
@@ -52,9 +67,6 @@ public struct Keychain: Sendable, KeychainProtocol {
     /// - Parameters:
     ///   - key: The key used to store the string.
     /// - Returns: The stored string.
-    /// - Throws: `KeychainError.itemNotFound` if no item exists for the given key.
-    /// - Throws: `KeychainError.stringConversionFailed` if the data cannot be decoded as UTF-8.
-    /// - Throws: `KeychainError.unexpectedStatus` if the keychain query fails.
     public func string(forKey key: String) throws -> String {
         let data = try data(forKey: key)
 
@@ -70,8 +82,6 @@ public struct Keychain: Sendable, KeychainProtocol {
     /// - Parameters:
     ///   - key: The key used to store the data.
     /// - Returns: The stored data.
-    /// - Throws: `KeychainError.itemNotFound` if no item exists for the given key.
-    /// - Throws: `KeychainError.unexpectedStatus` if the keychain query fails.
     public func data(forKey key: String) throws -> Data {
         var query = getBaseQuery()
         query[kSecAttrAccount] = key
@@ -90,7 +100,7 @@ public struct Keychain: Sendable, KeychainProtocol {
         }
 
         guard let data = result as? Data else {
-            throw KeychainError.unexpectedStatus(status)
+            throw KeychainError.unexpectedResultType
         }
 
         return data
@@ -102,18 +112,12 @@ public struct Keychain: Sendable, KeychainProtocol {
     ///   - value: The string to store in the keychain.
     ///   - key: The key to associate with the stored value.
     ///   - accessOption: Controls when the item can be accessed. Defaults to `.accessibleWhenUnlocked`.
-    /// - Throws: `KeychainError.stringConversionFailed` if the string cannot be encoded as UTF-8.
-    /// - Throws: `KeychainError.unexpectedStatus` if the keychain query fails.
     public func set(
         _ value: String,
         forKey key: String,
         withAccessOption accessOption: KeychainAccessOption = .defaultValue
     ) throws {
-        guard let data = value.data(using: .utf8) else {
-            throw KeychainError.stringConversionFailed
-        }
-
-        try set(data, forKey: key, withAccessOption: accessOption)
+        try set(Data(value.utf8), forKey: key, withAccessOption: accessOption)
     }
 
     /// Stores a data value in the keychain for the given key.
@@ -122,22 +126,34 @@ public struct Keychain: Sendable, KeychainProtocol {
     ///   - value: The data to store in the keychain.
     ///   - key: The key to associate with the stored value.
     ///   - accessOption: Controls when the item can be accessed. Defaults to `.accessibleWhenUnlocked`.
-    /// - Throws: `KeychainError.unexpectedStatus` if the keychain query fails.
     public func set(
         _ value: Data,
         forKey key: String,
         withAccessOption accessOption: KeychainAccessOption = .defaultValue
     ) throws {
-        try remove(forKey: key)
-
         var query = getBaseQuery()
         query[kSecAttrAccount] = key
-        query[kSecValueData] = value
-        query[kSecAttrAccessible] = accessOption.value
 
-        let status = SecItemAdd(query as CFDictionary, nil)
+        let attributes: [CFString: Any] = [
+            kSecValueData: value,
+            kSecAttrAccessible: accessOption.value,
+        ]
 
-        if status != noErr {
+        let status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+
+        switch status {
+        case errSecSuccess:
+            return
+        case errSecItemNotFound:
+            query[kSecValueData] = value
+            query[kSecAttrAccessible] = accessOption.value
+
+            let status = SecItemAdd(query as CFDictionary, nil)
+
+            if status != errSecSuccess {
+                throw KeychainError.unexpectedStatus(status)
+            }
+        default:
             throw KeychainError.unexpectedStatus(status)
         }
     }
@@ -146,7 +162,6 @@ public struct Keychain: Sendable, KeychainProtocol {
     ///
     /// - Parameters:
     ///   - key: The key of the item to remove.
-    /// - Throws: `KeychainError.unexpectedStatus` if the keychain query fails.
     public func remove(forKey key: String) throws {
         var query = getBaseQuery()
         query[kSecAttrAccount] = key
@@ -154,14 +169,9 @@ public struct Keychain: Sendable, KeychainProtocol {
         try remove(withQuery: query)
     }
 
-    /// Removes all  items in the keychain with this instance's service, access group and synchronizable setting.
-    ///
-    /// - Throws: `KeychainError.unexpectedStatus` if the keychain query fails.
+    /// Removes all items in the keychain with this instance's service, access group and synchronizable setting.
     public func clear() throws {
-        var query = getBaseQuery()
-        query[kSecMatchLimit] = kSecMatchLimitAll
-        
-        try remove(withQuery: query)
+        try remove(withQuery: getBaseQuery())
     }
 }
 
@@ -169,7 +179,8 @@ private extension Keychain {
 
     func getBaseQuery() -> [CFString: Any] {
         var query: [CFString: Any] = [
-            kSecClass: kSecClassGenericPassword
+            kSecClass: kSecClassGenericPassword,
+            kSecUseDataProtectionKeychain: true
         ]
         
         if let accessGroup {

@@ -1,11 +1,22 @@
+//
+//  KeychainError.swift
+//  KeychainKit
+//
+//  Created by Dennis Dreissen on 15/05/2026.
+//  Copyright © 2026 Dennis Dreissen
+//
+
 import Foundation
 
-public enum KeychainError: Error, Equatable {
+public enum KeychainError: Error, Sendable, Equatable {
 
     /// No item exists for the given key.
     case itemNotFound
 
-    /// Data cannot be encoded or decoded as a UTF-8 string.
+    /// The keychain result data is invalid.
+    case unexpectedResultType
+
+    /// Data cannot be decoded as a UTF-8 string.
     case stringConversionFailed
 
     /// The keychain query failed.

@@ -11,7 +11,7 @@ let value = try keychain.string(forKey: "key_1")
 
  ```Swift
 dependencies: [
-    .package(url: "https://github.com/DennisDreissen/KeychainKit", .upToNextMajor(from: "1.0.0"))
+    .package(url: "https://github.com/DennisDreissen/KeychainKit.git", .upToNextMajor(from: "1.0.0"))
 ]
  ```
 
@@ -47,7 +47,7 @@ let dataValue = try keychain.data(forKey: "key_2")
 
  ```Swift
 let keychain = Keychain()
-let allKeys = keychain.keys()
+let allKeys = try keychain.keys()
  ```
 
 ### Removing data
@@ -85,12 +85,15 @@ let keychain = Keychain(
 All methods are throwing, except for the `keys()`. The `unexpectedStatus` contains an `OSStatus` returned by Apple's Security framework.
 
  ```Swift
-public enum KeychainError: Error, Equatable {
+public enum KeychainError: Error, Sendable, Equatable {
 
     /// No item exists for the given key.
     case itemNotFound
 
-    /// Data cannot be encoded or decoded as a UTF-8 string.
+    /// The keychain result data is invalid.
+    case unexpectedResultType
+
+    /// Data cannot be decoded as a UTF-8 string.
     case stringConversionFailed
 
     /// The keychain query failed.

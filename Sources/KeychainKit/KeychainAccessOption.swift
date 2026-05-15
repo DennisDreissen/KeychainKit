@@ -1,9 +1,17 @@
+//
+//  KeychainAccessOption.swift
+//  KeychainKit
+//
+//  Created by Dennis Dreissen on 15/05/2026.
+//  Copyright © 2026 Dennis Dreissen
+//
+
 import Foundation
 import Security
 
-public enum KeychainAccessOption: Sendable {
+public enum KeychainAccessOption: Sendable, Equatable, CaseIterable {
 
-    // Default option for keychain items added without explicitly setting the access option.
+    /// Default option for keychain items added without explicitly setting the access option.
     public static let defaultValue = KeychainAccessOption.accessibleWhenUnlocked
 
     /// Wrapper for: kSecAttrAccessibleWhenUnlocked

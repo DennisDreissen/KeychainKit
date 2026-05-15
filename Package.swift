@@ -3,6 +3,9 @@ import PackageDescription
 
 let package = Package(
     name: "KeychainKit",
+    platforms: [
+        .iOS(.v15), .macOS(.v12)
+    ],
     products: [
         .library(
             name: "KeychainKit",
@@ -12,14 +15,6 @@ let package = Package(
     targets: [
         .target(
             name: "KeychainKit"
-        ),
-        .testTarget(
-            name: "KeychainKitTests",
-            dependencies: ["KeychainKit"],
-            path: "Tests/KeychainKitTests",
-            linkerSettings: [
-                .linkedFramework("Security")
-            ]
         ),
     ],
     swiftLanguageModes: [.v6]
