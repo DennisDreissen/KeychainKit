@@ -86,7 +86,7 @@ let keychain = Keychain(
 
 # Errors
 
-All methods are throwing, except for the `keys()`. The `unexpectedStatus` contains an `OSStatus` returned by Apple's Security framework.
+All methods are throwing. The `unexpectedStatus` contains an `OSStatus` returned by Apple's Security framework.
 
  ```Swift
 public enum KeychainError: Error, Sendable, Equatable {
