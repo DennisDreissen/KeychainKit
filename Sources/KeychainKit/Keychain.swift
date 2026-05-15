@@ -180,7 +180,7 @@ private extension Keychain {
     func getBaseQuery() -> [CFString: Any] {
         var query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
-            kSecUseDataProtectionKeychain: true
+            kSecUseDataProtectionKeychain: kCFBooleanTrue
         ]
         
         if let accessGroup {
