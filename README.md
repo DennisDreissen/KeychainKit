@@ -1,3 +1,7 @@
+![Tests](https://img.shields.io/github/actions/workflow/status/DennisDreissen/KeychainKit/tests.yml?color=brightgreen&label=Tests&logo=github)
+![SPM](https://img.shields.io/badge/Swift_Package_Manager-compatible-brightgreen)
+![Swift](https://img.shields.io/badge/Swift-6.0_6.1_6.2_6.3-brightgreen)
+
 # KeychainKit for Swift
 
 This is a simple wrapper around Apple's Keychain to make saving and retrieving data from the Keychain a bit easier.
